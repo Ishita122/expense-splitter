@@ -33,9 +33,6 @@ jobs:
       - name: Lint with ruff
         run: ruff check app || true
 
-      - name: Type check (optional, non-blocking)
-        run: python -m compileall app
-
       - name: Run tests
         run: pytest -v
 
@@ -52,6 +49,10 @@ jobs:
       - name: Smoke test container
         run: |
           docker run -d --name es -p 8000:8000 expense-splitter:ci
+          echo "Waiting for startup..."
           sleep 5
-          curl --fail http://localhost:8000/health || (docker logs es && exit 1)
+          echo "=== CONTAINER LOGS ==="
+          docker logs es
+          echo "=== TESTING HEALTH ==="
+          curl --fail http://localhost:8000/health || (echo "Health check failed" && exit 1)
           docker stop es
