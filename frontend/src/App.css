@@ -270,3 +270,122 @@ h1 {
   font-size: 30px;
   margin-bottom: 10px;
 }
+/* GROUP DETAILS */
+
+.clickable-group {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.clickable-group:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.open-text {
+  display: block;
+  color: #2563eb;
+  font-size: 13px;
+  margin-top: 7px;
+  font-weight: bold;
+}
+
+.back-btn {
+  border: none;
+  background: transparent;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 0;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+/* EXPENSE FORM */
+
+.expense-form {
+  display: grid;
+  grid-template-columns: 2fr 1fr auto;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.expense-form input {
+  padding: 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.expense-form button {
+  padding: 13px 22px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* EXPENSE LIST */
+
+.expense-list {
+  margin-top: 20px;
+}
+
+.expense-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  background: #f9fafb;
+}
+
+.expense-card h3 {
+  margin: 0 0 5px;
+  color: #1f2937;
+}
+
+.expense-card p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.expense-amount {
+  font-size: 18px;
+  color: #1f2937;
+}
+
+/* BALANCES */
+
+.balance-list {
+  margin-top: 20px;
+}
+
+.balance-card {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+/* MOBILE */
+
+@media (max-width: 650px) {
+  .expense-form {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-header {
+    align-items: flex-start;
+    gap: 20px;
+  }
+}

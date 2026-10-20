@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import "./App.css";
 
@@ -16,17 +15,25 @@ function App() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
 
   // Groups
   const [groups, setGroups] = useState([]);
   const [groupName, setGroupName] = useState("");
-
-  // Messages
-  const [message, setMessage] = useState("");
   const [groupMessage, setGroupMessage] = useState("");
+  const [selectedGroup, setSelectedGroup] = useState(null);
+
+  // Expenses
+  const [expenses, setExpenses] = useState([]);
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
+  const [expenseMessage, setExpenseMessage] = useState("");
+
+  // Balances
+  const [balances, setBalances] = useState([]);
 
   // =====================================================
-  // GET CURRENT USER
+  // CURRENT USER
   // =====================================================
 
   useEffect(() => {
@@ -58,13 +65,13 @@ function App() {
   }, [isLoggedIn]);
 
   // =====================================================
-  // GET GROUPS
+  // LOAD GROUPS
   // =====================================================
 
   useEffect(() => {
-    if (!isLoggedIn) return;
-
-    loadGroups();
+    if (isLoggedIn) {
+      loadGroups();
+    }
   }, [isLoggedIn]);
 
   const loadGroups = async () => {
@@ -72,7 +79,6 @@ function App() {
 
     try {
       const response = await fetch(`${API_URL}/groups`, {
-        method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -82,8 +88,6 @@ function App() {
 
       if (response.ok) {
         setGroups(data);
-      } else {
-        console.error("Failed to load groups:", data);
       }
     } catch (error) {
       console.error("Group loading error:", error);
@@ -96,7 +100,6 @@ function App() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setMessage("");
 
     // LOGIN
@@ -128,7 +131,7 @@ function App() {
           setMessage(data.detail || "Invalid email or password.");
         }
       } catch (error) {
-        console.error("Login error:", error);
+        console.error(error);
         setMessage("Cannot connect to the backend.");
       }
 
@@ -167,7 +170,7 @@ function App() {
         setMessage(data.detail || "Registration failed.");
       }
     } catch (error) {
-      console.error("Registration error:", error);
+      console.error(error);
       setMessage("Cannot connect to the backend.");
     }
   };
@@ -178,10 +181,6 @@ function App() {
 
   const createGroup = async (e) => {
     e.preventDefault();
-
-    if (!groupName.trim()) return;
-
-    setGroupMessage("");
 
     const token = localStorage.getItem("token");
 
@@ -202,17 +201,147 @@ function App() {
       const data = await response.json();
 
       if (response.ok) {
-        setGroupMessage("Group created successfully!");
         setGroupName("");
+        setGroupMessage("Group created successfully!");
 
-        // Reload groups from backend
         await loadGroups();
       } else {
         setGroupMessage(data.detail || "Could not create group.");
       }
     } catch (error) {
-      console.error("Create group error:", error);
-      setGroupMessage("Cannot connect to the backend.");
+      console.error(error);
+      setGroupMessage("Cannot connect to backend.");
+    }
+  };
+
+  // =====================================================
+  // OPEN GROUP
+  // =====================================================
+
+  const openGroup = async (group) => {
+    setSelectedGroup(group);
+    setExpenseMessage("");
+
+    await loadExpenses(group.id);
+    await loadBalances(group.id);
+  };
+
+  // =====================================================
+  // LOAD EXPENSES
+  // =====================================================
+
+  const loadExpenses = async (groupId) => {
+    const token = localStorage.getItem("token");
+
+    try {
+      const response = await fetch(
+        `${API_URL}/groups/${groupId}/expenses`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setExpenses(data);
+      }
+    } catch (error) {
+      console.error("Expense loading error:", error);
+    }
+  };
+
+  // =====================================================
+  // LOAD BALANCES
+  // =====================================================
+
+  const loadBalances = async (groupId) => {
+    const token = localStorage.getItem("token");
+
+    try {
+      const response = await fetch(
+        `${API_URL}/groups/${groupId}/balances`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setBalances(data);
+      }
+    } catch (error) {
+      console.error("Balance loading error:", error);
+    }
+  };
+
+  // =====================================================
+  // CREATE EXPENSE
+  // =====================================================
+
+  const createExpense = async (e) => {
+    e.preventDefault();
+
+    if (!user || !selectedGroup) return;
+
+    const rupees = Number(amount);
+
+    if (!description.trim() || !Number.isFinite(rupees) || rupees <= 0) {
+      setExpenseMessage("Enter a valid description and amount.");
+      return;
+    }
+
+    const amountCents = Math.round(rupees * 100);
+
+    const token = localStorage.getItem("token");
+
+    try {
+      const response = await fetch(
+        `${API_URL}/groups/${selectedGroup.id}/expenses`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+
+          body: JSON.stringify({
+            description: description,
+            paid_by: user.id,
+            amount_cents: amountCents,
+
+            splits: [
+              {
+                user_id: user.id,
+                share_cents: amountCents,
+              },
+            ],
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setDescription("");
+        setAmount("");
+
+        setExpenseMessage("Expense added successfully!");
+
+        await loadExpenses(selectedGroup.id);
+        await loadBalances(selectedGroup.id);
+      } else {
+        setExpenseMessage(data.detail || "Could not add expense.");
+      }
+    } catch (error) {
+      console.error(error);
+      setExpenseMessage("Cannot connect to backend.");
     }
   };
 
@@ -226,14 +355,176 @@ function App() {
     setIsLoggedIn(false);
     setUser(null);
     setGroups([]);
+    setSelectedGroup(null);
+    setExpenses([]);
+    setBalances([]);
 
-    setName("");
     setEmail("");
     setPassword("");
-
     setMessage("");
-    setGroupMessage("");
   };
+
+  // =====================================================
+  // GROUP DETAILS PAGE
+  // =====================================================
+
+  if (isLoggedIn && selectedGroup) {
+    return (
+      <div className="page">
+        <div className="dashboard-card">
+          <div className="dashboard-header">
+            <div>
+              <button
+                className="back-btn"
+                onClick={() => {
+                  setSelectedGroup(null);
+                  setExpenses([]);
+                  setBalances([]);
+                  setExpenseMessage("");
+                }}
+              >
+                ← Back
+              </button>
+
+              <h1>{selectedGroup.name}</h1>
+
+              <p className="subtitle dashboard-subtitle">
+                Group #{selectedGroup.id}
+              </p>
+            </div>
+
+            <button
+              className="logout-btn"
+              onClick={handleLogout}
+            >
+              Logout
+            </button>
+          </div>
+
+          {/* ADD EXPENSE */}
+
+          <div className="dashboard-section">
+            <h2>Add Expense</h2>
+
+            <p className="section-description">
+              Add a new expense to this group.
+            </p>
+
+            <form
+              className="expense-form"
+              onSubmit={createExpense}
+            >
+              <input
+                type="text"
+                placeholder="Expense description"
+                value={description}
+                onChange={(e) =>
+                  setDescription(e.target.value)
+                }
+                required
+              />
+
+              <input
+                type="number"
+                placeholder="Amount in ₹"
+                min="0.01"
+                step="0.01"
+                value={amount}
+                onChange={(e) =>
+                  setAmount(e.target.value)
+                }
+                required
+              />
+
+              <button type="submit">
+                Add Expense
+              </button>
+            </form>
+
+            {expenseMessage && (
+              <p className="group-message">
+                {expenseMessage}
+              </p>
+            )}
+          </div>
+
+          {/* EXPENSE HISTORY */}
+
+          <div className="dashboard-section">
+            <h2>Expenses</h2>
+
+            {expenses.length === 0 ? (
+              <div className="empty-groups">
+                <h3>No expenses yet</h3>
+
+                <p>
+                  Add your first expense above.
+                </p>
+              </div>
+            ) : (
+              <div className="expense-list">
+                {expenses.map((expense) => (
+                  <div
+                    className="expense-card"
+                    key={expense.id}
+                  >
+                    <div>
+                      <h3>
+                        {expense.description}
+                      </h3>
+
+                      <p>
+                        Paid by User #{expense.paid_by}
+                      </p>
+                    </div>
+
+                    <strong className="expense-amount">
+                      ₹
+                      {(
+                        expense.amount_cents / 100
+                      ).toFixed(2)}
+                    </strong>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* BALANCES */}
+
+          <div className="dashboard-section">
+            <h2>Balances</h2>
+
+            {balances.length === 0 ? (
+              <p className="section-description">
+                No balance information available.
+              </p>
+            ) : (
+              <div className="balance-list">
+                {balances.map((balance) => (
+                  <div
+                    className="balance-card"
+                    key={balance.user_id}
+                  >
+                    <span>
+                      User #{balance.user_id}
+                    </span>
+
+                    <strong>
+                      ₹
+                      {(
+                        balance.net_cents / 100
+                      ).toFixed(2)}
+                    </strong>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // =====================================================
   // DASHBOARD
@@ -261,6 +552,8 @@ function App() {
               Logout
             </button>
           </div>
+
+          {/* CREATE GROUP */}
 
           <div className="dashboard-section">
             <h2>Create a Group</h2>
@@ -295,26 +588,32 @@ function App() {
             )}
           </div>
 
+          {/* GROUPS */}
+
           <div className="dashboard-section">
             <h2>My Groups</h2>
 
             {groups.length === 0 ? (
               <div className="empty-groups">
-                <div className="empty-icon">₹</div>
+                <div className="empty-icon">
+                  ₹
+                </div>
 
                 <h3>No groups yet</h3>
 
                 <p>
-                  Create your first group above to start
+                  Create your first group to start
                   splitting expenses.
                 </p>
               </div>
             ) : (
               <div className="groups-grid">
                 {groups.map((group) => (
-                  <div
-                    className="group-card"
+                  <button
+                    type="button"
+                    className="group-card clickable-group"
                     key={group.id}
+                    onClick={() => openGroup(group)}
                   >
                     <div className="group-icon">
                       ₹
@@ -322,9 +621,16 @@ function App() {
 
                     <div>
                       <h3>{group.name}</h3>
-                      <p>Group #{group.id}</p>
+
+                      <p>
+                        Group #{group.id}
+                      </p>
+
+                      <span className="open-text">
+                        Open group →
+                      </span>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
