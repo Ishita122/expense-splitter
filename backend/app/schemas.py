@@ -46,7 +46,7 @@ class ExpenseCreate(BaseModel):
             raise ValueError("At least one split required")
         return v
 
-    def model_post_init(self, __context):
+    def model_post_init(self, __context,/):
         total = sum(s.share_cents for s in self.splits)
         if total != self.amount_cents:
             raise ValueError(f"Sum of splits ({total}) must equal amount_cents ({self.amount_cents})")
