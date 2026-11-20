@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import AddMember from "./components/AddMember";
 import "./App.css";
 
 const API_URL = "http://127.0.0.1:8000";
@@ -11,7 +12,7 @@ function App() {
 
   const [user, setUser] = useState(null);
 
-  // Authentication form
+  // Authentication
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,6 +23,7 @@ function App() {
   const [groupName, setGroupName] = useState("");
   const [groupMessage, setGroupMessage] = useState("");
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
 
   // Expenses
   const [expenses, setExpenses] = useState([]);
@@ -65,7 +67,7 @@ function App() {
   }, [isLoggedIn]);
 
   // =====================================================
-  // LOAD GROUPS
+  // GROUPS
   // =====================================================
 
   useEffect(() => {
@@ -112,9 +114,11 @@ function App() {
 
         const response = await fetch(`${API_URL}/auth/login`, {
           method: "POST",
+
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
           },
+
           body: formData,
         });
 
@@ -142,6 +146,7 @@ function App() {
     try {
       const response = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json",
         },
@@ -205,6 +210,11 @@ function App() {
         setGroupMessage("Group created successfully!");
 
         await loadGroups();
+
+        setTimeout(() => {
+          setShowCreateGroup(false);
+          setGroupMessage("");
+        }, 1200);
       } else {
         setGroupMessage(data.detail || "Could not create group.");
       }
@@ -227,7 +237,7 @@ function App() {
   };
 
   // =====================================================
-  // LOAD EXPENSES
+  // EXPENSES
   // =====================================================
 
   const loadExpenses = async (groupId) => {
@@ -253,10 +263,6 @@ function App() {
     }
   };
 
-  // =====================================================
-  // LOAD BALANCES
-  // =====================================================
-
   const loadBalances = async (groupId) => {
     const token = localStorage.getItem("token");
 
@@ -280,10 +286,6 @@ function App() {
     }
   };
 
-  // =====================================================
-  // CREATE EXPENSE
-  // =====================================================
-
   const createExpense = async (e) => {
     e.preventDefault();
 
@@ -291,13 +293,18 @@ function App() {
 
     const rupees = Number(amount);
 
-    if (!description.trim() || !Number.isFinite(rupees) || rupees <= 0) {
-      setExpenseMessage("Enter a valid description and amount.");
+    if (
+      !description.trim() ||
+      !Number.isFinite(rupees) ||
+      rupees <= 0
+    ) {
+      setExpenseMessage(
+        "Enter a valid description and amount."
+      );
       return;
     }
 
     const amountCents = Math.round(rupees * 100);
-
     const token = localStorage.getItem("token");
 
     try {
@@ -312,7 +319,7 @@ function App() {
           },
 
           body: JSON.stringify({
-            description: description,
+            description,
             paid_by: user.id,
             amount_cents: amountCents,
 
@@ -332,16 +339,22 @@ function App() {
         setDescription("");
         setAmount("");
 
-        setExpenseMessage("Expense added successfully!");
+        setExpenseMessage(
+          "Expense added successfully!"
+        );
 
         await loadExpenses(selectedGroup.id);
         await loadBalances(selectedGroup.id);
       } else {
-        setExpenseMessage(data.detail || "Could not add expense.");
+        setExpenseMessage(
+          data.detail || "Could not add expense."
+        );
       }
     } catch (error) {
       console.error(error);
-      setExpenseMessage("Cannot connect to backend.");
+      setExpenseMessage(
+        "Cannot connect to backend."
+      );
     }
   };
 
@@ -354,10 +367,14 @@ function App() {
 
     setIsLoggedIn(false);
     setUser(null);
+
     setGroups([]);
     setSelectedGroup(null);
+
     setExpenses([]);
     setBalances([]);
+
+    setShowCreateGroup(false);
 
     setEmail("");
     setPassword("");
@@ -365,163 +382,468 @@ function App() {
   };
 
   // =====================================================
-  // GROUP DETAILS PAGE
+  // CALCULATED VALUES
+  // =====================================================
+
+  const totalExpenses = expenses.reduce(
+    (total, expense) =>
+      total + expense.amount_cents,
+    0
+  );
+
+  const userInitials = user?.name
+    ? user.name
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "U";
+
+  // =====================================================
+  // GROUP DETAILS
   // =====================================================
 
   if (isLoggedIn && selectedGroup) {
     return (
-      <div className="page">
-        <div className="dashboard-card">
-          <div className="dashboard-header">
-            <div>
+      <div className="app-background">
+
+        {/* NAVBAR */}
+
+        <nav className="app-navbar">
+          <div className="nav-inner">
+
+            <div className="nav-brand">
+              <div className="nav-logo">
+                ₹
+              </div>
+
+              <span>
+                Splitly
+              </span>
+            </div>
+
+            <div className="nav-user">
+
+              <div className="user-avatar">
+                {userInitials}
+              </div>
+
+              <div className="user-details">
+                <strong>
+                  {user?.name || "User"}
+                </strong>
+
+                <span>
+                  {user?.email || ""}
+                </span>
+              </div>
+
               <button
-                className="back-btn"
-                onClick={() => {
-                  setSelectedGroup(null);
-                  setExpenses([]);
-                  setBalances([]);
-                  setExpenseMessage("");
-                }}
+                className="nav-logout"
+                onClick={handleLogout}
               >
-                ← Back
+                Logout
               </button>
 
-              <h1>{selectedGroup.name}</h1>
+            </div>
 
-              <p className="subtitle dashboard-subtitle">
-                Group #{selectedGroup.id}
+          </div>
+        </nav>
+
+        {/* PAGE */}
+
+        <main className="app-content">
+
+          <button
+            className="modern-back-btn"
+            onClick={() => {
+              setSelectedGroup(null);
+              setExpenses([]);
+              setBalances([]);
+              setExpenseMessage("");
+            }}
+          >
+            ← Back to groups
+          </button>
+
+          {/* GROUP HEADER */}
+
+          <section className="group-page-header">
+
+            <div>
+              <span className="page-eyebrow">
+                GROUP OVERVIEW
+              </span>
+
+              <h1>
+                {selectedGroup.name}
+              </h1>
+
+              <p>
+                Manage expenses and review the
+                group balance.
               </p>
             </div>
 
-            <button
-              className="logout-btn"
-              onClick={handleLogout}
-            >
-              Logout
-            </button>
-          </div>
+            <div className="group-number">
+              Group #{selectedGroup.id}
+            </div>
 
-          {/* ADD EXPENSE */}
+          </section>
 
-          <div className="dashboard-section">
-            <h2>Add Expense</h2>
+          {/* STATS */}
 
-            <p className="section-description">
-              Add a new expense to this group.
-            </p>
+          <section className="group-stats">
+
+            <div className="stat-card">
+
+              <div className="stat-icon purple">
+                ₹
+              </div>
+
+              <div>
+                <span>
+                  Total Expenses
+                </span>
+
+                <strong>
+                  ₹
+                  {(totalExpenses / 100).toFixed(2)}
+                </strong>
+              </div>
+
+            </div>
+
+            <div className="stat-card">
+
+              <div className="stat-icon blue">
+                ▤
+              </div>
+
+              <div>
+                <span>
+                  Transactions
+                </span>
+
+                <strong>
+                  {expenses.length}
+                </strong>
+              </div>
+
+            </div>
+
+            <div className="stat-card">
+
+              <div className="stat-icon green">
+                ◎
+              </div>
+
+              <div>
+                <span>
+                  Your Balance
+                </span>
+
+                <strong>
+                  ₹
+                  {(
+                    (
+                      balances.find(
+                        (balance) =>
+                          balance.user_id ===
+                          user?.id
+                      )?.net_cents || 0
+                    ) / 100
+                  ).toFixed(2)}
+                </strong>
+              </div>
+
+            </div>
+
+          </section>
+
+          {/* =========================================
+              ADD MEMBER
+          ========================================= */}
+
+          <AddMember
+            groupId={selectedGroup.id}
+          />
+
+          {/* =========================================
+              ADD EXPENSE
+          ========================================= */}
+
+          <section className="modern-section">
+
+            <div className="section-heading">
+
+              <div>
+                <span className="section-eyebrow">
+                  NEW TRANSACTION
+                </span>
+
+                <h2>
+                  Add an expense
+                </h2>
+              </div>
+
+            </div>
 
             <form
-              className="expense-form"
+              className="modern-expense-form"
               onSubmit={createExpense}
             >
-              <input
-                type="text"
-                placeholder="Expense description"
-                value={description}
-                onChange={(e) =>
-                  setDescription(e.target.value)
-                }
-                required
-              />
 
-              <input
-                type="number"
-                placeholder="Amount in ₹"
-                min="0.01"
-                step="0.01"
-                value={amount}
-                onChange={(e) =>
-                  setAmount(e.target.value)
-                }
-                required
-              />
+              <div className="field">
 
-              <button type="submit">
-                Add Expense
+                <label>
+                  Description
+                </label>
+
+                <input
+                  type="text"
+                  placeholder="e.g. Dinner, hotel, cab..."
+                  value={description}
+                  onChange={(e) =>
+                    setDescription(
+                      e.target.value
+                    )
+                  }
+                  required
+                />
+
+              </div>
+
+              <div className="field">
+
+                <label>
+                  Amount
+                </label>
+
+                <div className="money-input">
+
+                  <span>
+                    ₹
+                  </span>
+
+                  <input
+                    type="number"
+                    placeholder="0.00"
+                    min="0.01"
+                    step="0.01"
+                    value={amount}
+                    onChange={(e) =>
+                      setAmount(
+                        e.target.value
+                      )
+                    }
+                    required
+                  />
+
+                </div>
+
+              </div>
+
+              <button
+                className="primary-action"
+                type="submit"
+              >
+                Add Expense +
               </button>
+
             </form>
 
             {expenseMessage && (
-              <p className="group-message">
+              <div className="success-message">
                 {expenseMessage}
-              </p>
+              </div>
             )}
-          </div>
 
-          {/* EXPENSE HISTORY */}
+          </section>
 
-          <div className="dashboard-section">
-            <h2>Expenses</h2>
+          {/* =========================================
+              EXPENSE HISTORY
+          ========================================= */}
+
+          <section className="modern-section">
+
+            <div className="section-heading">
+
+              <div>
+                <span className="section-eyebrow">
+                  ACTIVITY
+                </span>
+
+                <h2>
+                  Recent expenses
+                </h2>
+              </div>
+
+              <span className="transaction-count">
+                {expenses.length} transaction
+                {expenses.length !== 1
+                  ? "s"
+                  : ""}
+              </span>
+
+            </div>
 
             {expenses.length === 0 ? (
-              <div className="empty-groups">
-                <h3>No expenses yet</h3>
+
+              <div className="modern-empty">
+
+                <div>
+                  ₹
+                </div>
+
+                <h3>
+                  No expenses yet
+                </h3>
 
                 <p>
-                  Add your first expense above.
+                  Add your first expense to
+                  this group.
                 </p>
+
               </div>
+
             ) : (
-              <div className="expense-list">
+
+              <div className="modern-expense-list">
+
                 {expenses.map((expense) => (
+
                   <div
-                    className="expense-card"
+                    className="modern-expense-row"
                     key={expense.id}
                   >
-                    <div>
-                      <h3>
-                        {expense.description}
-                      </h3>
 
-                      <p>
-                        Paid by User #{expense.paid_by}
-                      </p>
+                    <div className="expense-symbol">
+                      ₹
                     </div>
 
-                    <strong className="expense-amount">
+                    <div className="expense-info">
+
+                      <strong>
+                        {expense.description}
+                      </strong>
+
+                      <span>
+                        Paid by User #
+                        {expense.paid_by}
+                      </span>
+
+                    </div>
+
+                    <strong className="modern-expense-amount">
                       ₹
                       {(
-                        expense.amount_cents / 100
+                        expense.amount_cents /
+                        100
                       ).toFixed(2)}
                     </strong>
+
                   </div>
+
                 ))}
+
               </div>
+
             )}
-          </div>
 
-          {/* BALANCES */}
+          </section>
 
-          <div className="dashboard-section">
-            <h2>Balances</h2>
+          {/* =========================================
+              BALANCES
+          ========================================= */}
+
+          <section className="modern-section">
+
+            <div className="section-heading">
+
+              <div>
+
+                <span className="section-eyebrow">
+                  SETTLEMENT
+                </span>
+
+                <h2>
+                  Group balances
+                </h2>
+
+              </div>
+
+            </div>
 
             {balances.length === 0 ? (
-              <p className="section-description">
-                No balance information available.
+
+              <p className="muted-text">
+                No balance information
+                available.
               </p>
+
             ) : (
-              <div className="balance-list">
+
+              <div className="modern-balance-list">
+
                 {balances.map((balance) => (
+
                   <div
-                    className="balance-card"
+                    className="modern-balance-row"
                     key={balance.user_id}
                   >
-                    <span>
-                      User #{balance.user_id}
-                    </span>
+
+                    <div className="balance-person">
+
+                      <div className="small-avatar">
+
+                        {balance.user_id ===
+                        user?.id
+                          ? userInitials
+                          : "U"}
+
+                      </div>
+
+                      <div>
+
+                        <strong>
+                          {balance.user_id ===
+                          user?.id
+                            ? user?.name
+                            : `User #${balance.user_id}`}
+                        </strong>
+
+                        <span>
+                          {balance.user_id ===
+                          user?.id
+                            ? "You"
+                            : `Member #${balance.user_id}`}
+                        </span>
+
+                      </div>
+
+                    </div>
 
                     <strong>
                       ₹
                       {(
-                        balance.net_cents / 100
+                        balance.net_cents /
+                        100
                       ).toFixed(2)}
                     </strong>
+
                   </div>
+
                 ))}
+
               </div>
+
             )}
-          </div>
-        </div>
+
+          </section>
+
+        </main>
       </div>
     );
   }
@@ -532,110 +854,353 @@ function App() {
 
   if (isLoggedIn) {
     return (
-      <div className="page">
-        <div className="dashboard-card">
-          <div className="dashboard-header">
-            <div>
-              <h1>Expense Splitter</h1>
+      <div className="app-background">
 
-              <p className="subtitle dashboard-subtitle">
-                {user
-                  ? `Welcome, ${user.name}!`
-                  : "Loading your account..."}
+        <nav className="app-navbar">
+
+          <div className="nav-inner">
+
+            <div className="nav-brand">
+
+              <div className="nav-logo">
+                ₹
+              </div>
+
+              <span>
+                Splitly
+              </span>
+
+            </div>
+
+            <div className="nav-links">
+
+              <button className="active">
+                Dashboard
+              </button>
+
+              <button>
+                Groups
+              </button>
+
+            </div>
+
+            <div className="nav-user">
+
+              <div className="user-avatar">
+                {userInitials}
+              </div>
+
+              <div className="user-details">
+
+                <strong>
+                  {user?.name || "User"}
+                </strong>
+
+                <span>
+                  {user?.email || ""}
+                </span>
+
+              </div>
+
+              <button
+                className="nav-logout"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+
+            </div>
+
+          </div>
+
+        </nav>
+
+        <main className="app-content">
+
+          {/* WELCOME */}
+
+          <section className="welcome-section">
+
+            <div>
+
+              <span className="page-eyebrow">
+                YOUR DASHBOARD
+              </span>
+
+              <h1>
+                Welcome back,{" "}
+                <span>
+                  {user?.name || "there"}!
+                </span>{" "}
+                👋
+              </h1>
+
+              <p>
+                Here's an overview of your
+                shared expenses and groups.
               </p>
+
             </div>
 
             <button
-              className="logout-btn"
-              onClick={handleLogout}
+              className="primary-action create-group-top"
+              onClick={() => {
+                setShowCreateGroup(
+                  !showCreateGroup
+                );
+
+                setGroupMessage("");
+              }}
             >
-              Logout
+              {showCreateGroup
+                ? "Close"
+                : "+ New Group"}
             </button>
-          </div>
+
+          </section>
+
+          {/* STATS */}
+
+          <section className="dashboard-stats">
+
+            <div className="dashboard-stat-card">
+
+              <div className="stat-icon purple">
+                ◉
+              </div>
+
+              <div>
+
+                <span>
+                  My Groups
+                </span>
+
+                <strong>
+                  {groups.length}
+                </strong>
+
+                <small>
+                  Active expense groups
+                </small>
+
+              </div>
+
+            </div>
+
+            <div className="dashboard-stat-card">
+
+              <div className="stat-icon blue">
+                ₹
+              </div>
+
+              <div>
+
+                <span>
+                  Expense Tracking
+                </span>
+
+                <strong>
+                  Active
+                </strong>
+
+                <small>
+                  Connected to FastAPI
+                </small>
+
+              </div>
+
+            </div>
+
+            <div className="dashboard-stat-card">
+
+              <div className="stat-icon green">
+                ✓
+              </div>
+
+              <div>
+
+                <span>
+                  Account
+                </span>
+
+                <strong>
+                  Secure
+                </strong>
+
+                <small>
+                  JWT authenticated
+                </small>
+
+              </div>
+
+            </div>
+
+          </section>
 
           {/* CREATE GROUP */}
 
-          <div className="dashboard-section">
-            <h2>Create a Group</h2>
+          {showCreateGroup && (
 
-            <p className="section-description">
-              Create a group for friends, roommates or trips.
-            </p>
+            <section className="create-group-panel">
 
-            <form
-              className="group-form"
-              onSubmit={createGroup}
-            >
-              <input
-                type="text"
-                placeholder="Example: Goa Trip"
-                value={groupName}
-                onChange={(e) =>
-                  setGroupName(e.target.value)
-                }
-                required
-              />
+              <div>
 
-              <button type="submit">
-                Create Group
-              </button>
-            </form>
+                <span className="section-eyebrow">
+                  CREATE GROUP
+                </span>
 
-            {groupMessage && (
-              <p className="group-message">
-                {groupMessage}
-              </p>
-            )}
-          </div>
+                <h2>
+                  Start a new expense group
+                </h2>
+
+                <p>
+                  Create a group for a trip,
+                  flat, event or anything
+                  you're sharing with friends.
+                </p>
+
+              </div>
+
+              <form
+                className="modern-group-form"
+                onSubmit={createGroup}
+              >
+
+                <input
+                  type="text"
+                  placeholder="e.g. Manali Trip"
+                  value={groupName}
+                  onChange={(e) =>
+                    setGroupName(
+                      e.target.value
+                    )
+                  }
+                  required
+                />
+
+                <button type="submit">
+                  Create Group →
+                </button>
+
+              </form>
+
+              {groupMessage && (
+                <div className="success-message">
+                  {groupMessage}
+                </div>
+              )}
+
+            </section>
+
+          )}
 
           {/* GROUPS */}
 
-          <div className="dashboard-section">
-            <h2>My Groups</h2>
+          <section className="groups-section">
+
+            <div className="section-heading">
+
+              <div>
+
+                <span className="section-eyebrow">
+                  YOUR GROUPS
+                </span>
+
+                <h2>
+                  Shared expenses
+                </h2>
+
+              </div>
+
+              <span className="group-count">
+                {groups.length} group
+                {groups.length !== 1
+                  ? "s"
+                  : ""}
+              </span>
+
+            </div>
 
             {groups.length === 0 ? (
-              <div className="empty-groups">
-                <div className="empty-icon">
+
+              <div className="modern-empty">
+
+                <div>
                   ₹
                 </div>
 
-                <h3>No groups yet</h3>
+                <h3>
+                  No groups yet
+                </h3>
 
                 <p>
-                  Create your first group to start
-                  splitting expenses.
+                  Create your first group
+                  to start splitting expenses.
                 </p>
+
               </div>
+
             ) : (
-              <div className="groups-grid">
-                {groups.map((group) => (
-                  <button
-                    type="button"
-                    className="group-card clickable-group"
-                    key={group.id}
-                    onClick={() => openGroup(group)}
-                  >
-                    <div className="group-icon">
-                      ₹
-                    </div>
 
-                    <div>
-                      <h3>{group.name}</h3>
+              <div className="modern-groups-grid">
 
-                      <p>
-                        Group #{group.id}
-                      </p>
+                {groups.map(
+                  (group, index) => (
 
-                      <span className="open-text">
-                        Open group →
-                      </span>
-                    </div>
-                  </button>
-                ))}
+                    <button
+                      type="button"
+                      className="modern-group-card"
+                      key={group.id}
+                      onClick={() =>
+                        openGroup(group)
+                      }
+                    >
+
+                      <div
+                        className={`group-card-icon ${
+                          index % 3 === 0
+                            ? "purple"
+                            : index % 3 === 1
+                            ? "blue"
+                            : "green"
+                        }`}
+                      >
+                        ₹
+                      </div>
+
+                      <div className="group-card-content">
+
+                        <span>
+                          GROUP #{group.id}
+                        </span>
+
+                        <h3>
+                          {group.name}
+                        </h3>
+
+                        <p>
+                          Track and manage
+                          shared expenses.
+                        </p>
+
+                      </div>
+
+                      <div className="group-arrow">
+                        →
+                      </div>
+
+                    </button>
+
+                  )
+                )}
+
               </div>
+
             )}
-          </div>
-        </div>
+
+          </section>
+
+        </main>
       </div>
     );
   }
@@ -645,101 +1210,333 @@ function App() {
   // =====================================================
 
   return (
-    <div className="page">
-      <div className="auth-card">
-        <div className="logo">₹</div>
+    <div className="auth-page">
 
-        <h1>Expense Splitter</h1>
+      <div className="auth-shell">
 
-        <p className="subtitle">
-          Split expenses with friends without the headache.
-        </p>
+        {/* LEFT SIDE */}
 
-        <div className="tabs">
-          <button
-            type="button"
-            className={isLogin ? "active" : ""}
-            onClick={() => {
-              setIsLogin(true);
-              setMessage("");
-            }}
-          >
-            Login
-          </button>
+        <section className="auth-hero">
 
-          <button
-            type="button"
-            className={!isLogin ? "active" : ""}
-            onClick={() => {
-              setIsLogin(false);
-              setMessage("");
-            }}
-          >
-            Register
-          </button>
-        </div>
+          <div className="brand">
 
-        <form onSubmit={handleSubmit}>
-          {!isLogin && (
-            <div className="form-group">
-              <label>Name</label>
-
-              <input
-                type="text"
-                placeholder="Enter your name"
-                value={name}
-                onChange={(e) =>
-                  setName(e.target.value)
-                }
-                required
-              />
+            <div className="brand-icon">
+              ₹
             </div>
-          )}
 
-          <div className="form-group">
-            <label>Email</label>
+            <span>
+              Splitly
+            </span>
 
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) =>
-                setEmail(e.target.value)
-              }
-              required
-            />
           </div>
 
-          <div className="form-group">
-            <label>Password</label>
+          <div className="hero-content">
 
-            <input
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) =>
-                setPassword(e.target.value)
-              }
-              required
-            />
+            <span className="hero-badge">
+              SMART EXPENSE SHARING
+            </span>
+
+            <h1>
+              Split smarter.
+              <br />
+
+              <span>
+                Live lighter.
+              </span>
+            </h1>
+
+            <p>
+              Keep trips, dinners and shared
+              bills simple. Track expenses,
+              organize groups and know exactly
+              where your money went.
+            </p>
+
+            <div className="feature-list">
+
+              <div className="feature-item">
+
+                <span className="feature-check">
+                  ✓
+                </span>
+
+                <div>
+
+                  <strong>
+                    Simple group expenses
+                  </strong>
+
+                  <small>
+                    Create groups for trips,
+                    friends and roommates.
+                  </small>
+
+                </div>
+
+              </div>
+
+              <div className="feature-item">
+
+                <span className="feature-check">
+                  ✓
+                </span>
+
+                <div>
+
+                  <strong>
+                    Clear expense history
+                  </strong>
+
+                  <small>
+                    Keep every shared payment
+                    organized.
+                  </small>
+
+                </div>
+
+              </div>
+
+              <div className="feature-item">
+
+                <span className="feature-check">
+                  ✓
+                </span>
+
+                <div>
+
+                  <strong>
+                    Balance tracking
+                  </strong>
+
+                  <small>
+                    See your group balances
+                    without messy calculations.
+                  </small>
+
+                </div>
+
+              </div>
+
+            </div>
+
           </div>
 
-          <button
-            className="submit-btn"
-            type="submit"
-          >
-            {isLogin
-              ? "Login"
-              : "Create Account"}
-          </button>
-        </form>
-
-        {message && (
-          <p className="bottom-text">
-            {message}
+          <p className="hero-footer">
+            Built for easier shared spending.
           </p>
-        )}
+
+        </section>
+
+        {/* RIGHT SIDE */}
+
+        <section className="auth-panel">
+
+          <div className="mobile-brand">
+
+            <div className="brand-icon">
+              ₹
+            </div>
+
+            <span>
+              Splitly
+            </span>
+
+          </div>
+
+          <div className="auth-panel-content">
+
+            <span className="auth-eyebrow">
+              {isLogin
+                ? "WELCOME BACK"
+                : "GET STARTED"}
+            </span>
+
+            <h2>
+              {isLogin
+                ? "Sign in to your account"
+                : "Create your account"}
+            </h2>
+
+            <p className="auth-description">
+              {isLogin
+                ? "Continue managing your shared expenses."
+                : "Start splitting expenses without the awkward maths."}
+            </p>
+
+            <div className="auth-tabs">
+
+              <button
+                type="button"
+                className={
+                  isLogin
+                    ? "active"
+                    : ""
+                }
+                onClick={() => {
+                  setIsLogin(true);
+                  setMessage("");
+                }}
+              >
+                Sign In
+              </button>
+
+              <button
+                type="button"
+                className={
+                  !isLogin
+                    ? "active"
+                    : ""
+                }
+                onClick={() => {
+                  setIsLogin(false);
+                  setMessage("");
+                }}
+              >
+                Register
+              </button>
+
+            </div>
+
+            <form
+              className="modern-auth-form"
+              onSubmit={handleSubmit}
+            >
+
+              {!isLogin && (
+
+                <div className="modern-form-group">
+
+                  <label>
+                    Full name
+                  </label>
+
+                  <div className="input-wrapper">
+
+                    <span className="input-icon">
+                      👤
+                    </span>
+
+                    <input
+                      type="text"
+                      placeholder="Enter your name"
+                      value={name}
+                      onChange={(e) =>
+                        setName(
+                          e.target.value
+                        )
+                      }
+                      required
+                    />
+
+                  </div>
+
+                </div>
+
+              )}
+
+              <div className="modern-form-group">
+
+                <label>
+                  Email address
+                </label>
+
+                <div className="input-wrapper">
+
+                  <span className="input-icon">
+                    ✉
+                  </span>
+
+                  <input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) =>
+                      setEmail(
+                        e.target.value
+                      )
+                    }
+                    required
+                  />
+
+                </div>
+
+              </div>
+
+              <div className="modern-form-group">
+
+                <label>
+                  Password
+                </label>
+
+                <div className="input-wrapper">
+
+                  <span className="input-icon">
+                    ⌑
+                  </span>
+
+                  <input
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) =>
+                      setPassword(
+                        e.target.value
+                      )
+                    }
+                    required
+                  />
+
+                </div>
+
+              </div>
+
+              <button
+                className="modern-submit-btn"
+                type="submit"
+              >
+                {isLogin
+                  ? "Sign In"
+                  : "Create Account"}
+
+                <span>
+                  →
+                </span>
+              </button>
+
+            </form>
+
+            {message && (
+              <div className="auth-message">
+                {message}
+              </div>
+            )}
+
+            <p className="auth-switch-text">
+
+              {isLogin
+                ? "New to Splitly?"
+                : "Already have an account?"}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setMessage("");
+                }}
+              >
+                {isLogin
+                  ? "Create an account"
+                  : "Sign in"}
+              </button>
+
+            </p>
+
+          </div>
+
+        </section>
+
       </div>
+
     </div>
   );
 }
