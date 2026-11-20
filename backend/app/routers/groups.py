@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
 from .. import models, schemas
-from ..deps import get_db, get_current_user
+from ..deps import get_current_user, get_db
 
 router = APIRouter(prefix="/groups", tags=["groups"])
 

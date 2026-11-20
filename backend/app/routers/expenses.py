@@ -1,8 +1,10 @@
+from collections import defaultdict
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from collections import defaultdict
+
 from .. import models, schemas
-from ..deps import get_db, get_current_user
+from ..deps import get_current_user, get_db
 
 router = APIRouter(prefix="/groups/{group_id}", tags=["expenses"])
 

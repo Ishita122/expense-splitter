@@ -1,6 +1,7 @@
-from pydantic import BaseModel, EmailStr, Field, field_validator
-from typing import List
 from datetime import datetime
+
+from pydantic import BaseModel, EmailStr, Field, field_validator
+
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -37,7 +38,7 @@ class ExpenseCreate(BaseModel):
     description: str = Field(min_length=1, max_length=255)
     paid_by: int
     amount_cents: int = Field(gt=0)
-    splits: List[SplitIn]
+    splits: list[SplitIn]
 
     @field_validator("splits")
     @classmethod
