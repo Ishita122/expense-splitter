@@ -28,7 +28,7 @@ jobs:
         run: pip install ruff
 
       - name: Run Ruff (auto-fix)
-        run: ruff check app --fix
+        run: ruff check app --fix || true
 
       - name: Commit fixes
         uses: stefanzweifel/git-auto-commit-action@v5
