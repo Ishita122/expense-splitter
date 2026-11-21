@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app  # Live-sync code changes during development without rebuilding!
+    environment:
+      - PORT=5000
+      - NODE_ENV=development
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"       # Access your app in the browser at http://localhost:8080
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+    depends_on:
+      - backend
