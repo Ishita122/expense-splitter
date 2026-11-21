@@ -1,10 +1,11 @@
 import { useState } from "react";
-
-const API_URL = "http://127.0.0.1:8000";
+import { addGroupMember } from "../api/api";
+import StatusMessage from "./StatusMessage";
 
 function AddMember({ groupId }) {
   const [userId, setUserId] = useState("");
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("info");
   const [loading, setLoading] = useState(false);
 
   const handleAddMember = async (e) => {
@@ -12,42 +13,57 @@ function AddMember({ groupId }) {
 
     if (!userId.trim()) {
       setMessage("Please enter a User ID.");
+      setMessageType("error");
       return;
     }
 
-    const token = localStorage.getItem("token");
+    const numericUserId = Number(userId);
+
+    if (
+      !Number.isInteger(numericUserId) ||
+      numericUserId <= 0
+    ) {
+      setMessage("Please enter a valid User ID.");
+      setMessageType("error");
+      return;
+    }
+
+    setLoading(true);
+    setMessage("");
 
     try {
-      setLoading(true);
-      setMessage("");
-
-      const response = await fetch(
-        `${API_URL}/groups/${groupId}/members`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            user_id: Number(userId),
-          }),
-        }
-      );
-
-      const data = await response.json();
+      const { response, data } =
+        await addGroupMember(
+          groupId,
+          numericUserId
+        );
 
       if (response.ok) {
-        setMessage("Member added successfully!");
+        setMessage(
+          "Member added successfully!"
+        );
+
+        setMessageType("success");
         setUserId("");
       } else {
         setMessage(
-          data.detail || "Could not add member."
+          data.detail ||
+            "Could not add member."
         );
+
+        setMessageType("error");
       }
     } catch (error) {
-      console.error("Add member error:", error);
-      setMessage("Cannot connect to the backend.");
+      console.error(
+        "Add member error:",
+        error
+      );
+
+      setMessage(
+        "Cannot connect to the backend."
+      );
+
+      setMessageType("error");
     } finally {
       setLoading(false);
     }
@@ -60,12 +76,14 @@ function AddMember({ groupId }) {
           <span className="section-eyebrow">
             GROUP MEMBERS
           </span>
+
           <h2>Add a member</h2>
         </div>
       </div>
 
       <p className="muted-text">
-        Add another registered Splitly user using their User ID.
+        Add another registered SplitEase user
+        using their User ID.
       </p>
 
       <form
@@ -79,13 +97,21 @@ function AddMember({ groupId }) {
 
           <input
             id="member-user-id"
-            type="text"
+            type="number"
+            min="1"
+            step="1"
             placeholder="Enter User ID, e.g. 4"
             value={userId}
-            onChange={(e) =>
-              setUserId(e.target.value)
-            }
+            onChange={(e) => {
+              setUserId(e.target.value);
+
+              if (message) {
+                setMessage("");
+              }
+            }}
             autoComplete="off"
+            disabled={loading}
+            required
           />
         </div>
 
@@ -95,16 +121,15 @@ function AddMember({ groupId }) {
           disabled={loading}
         >
           {loading
-            ? "Adding..."
+            ? "Adding member..."
             : "Add Member +"}
         </button>
       </form>
 
-      {message && (
-        <div className="success-message">
-          {message}
-        </div>
-      )}
+      <StatusMessage
+        message={message}
+        type={messageType}
+      />
     </section>
   );
 }

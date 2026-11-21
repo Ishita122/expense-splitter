@@ -1,0 +1,267 @@
+/* =========================================
+   SPLITLY RESPONSIVE DESIGN
+========================================= */
+
+/* TABLETS */
+
+@media (max-width: 900px) {
+  .app-content {
+    width: calc(100% - 32px);
+    padding-top: 40px;
+  }
+
+  .nav-inner {
+    width: calc(100% - 32px);
+  }
+
+  .nav-links {
+    margin-left: 25px;
+  }
+
+  .user-details {
+    display: none;
+  }
+
+  .dashboard-stats,
+  .group-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .modern-groups-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .welcome-section {
+    align-items: flex-start;
+  }
+}
+
+/* MOBILE */
+
+@media (max-width: 650px) {
+  .app-navbar {
+    position: sticky;
+    top: 0;
+  }
+
+  .nav-inner {
+    width: calc(100% - 24px);
+    height: 66px;
+  }
+
+  .nav-brand span {
+    font-size: 18px;
+  }
+
+  .nav-logo {
+    width: 35px;
+    height: 35px;
+  }
+
+  .nav-links {
+    display: none;
+  }
+
+  .user-avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+  .nav-logout {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  /* PAGE */
+
+  .app-content {
+    width: calc(100% - 24px);
+    padding: 30px 0 55px;
+  }
+
+  /* WELCOME */
+
+  .welcome-section {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+  }
+
+  .welcome-section h1 {
+    font-size: 32px;
+    line-height: 1.1;
+  }
+
+  .welcome-section p {
+    line-height: 1.6;
+  }
+
+  .create-group-top {
+    width: 100%;
+  }
+
+  /* DASHBOARD */
+
+  .dashboard-stats,
+  .group-stats {
+    margin-top: 25px;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .dashboard-stat-card,
+  .stat-card {
+    padding: 18px;
+  }
+
+  /* GROUPS */
+
+  .modern-groups-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modern-group-card {
+    min-height: 135px;
+    padding: 19px;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+  }
+
+  /* CREATE GROUP */
+
+  .create-group-panel,
+  .modern-section {
+    padding: 20px;
+  }
+
+  .modern-group-form {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .modern-group-form button {
+    height: 48px;
+  }
+
+  /* GROUP PAGE */
+
+  .group-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .group-page-header h1 {
+    font-size: 32px;
+  }
+
+  /* ADD MEMBER */
+
+  .member-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .member-add-btn {
+    width: 100%;
+  }
+
+  /* EXPENSE ROW */
+
+  .modern-expense-row {
+    align-items: flex-start;
+  }
+
+  .expense-info {
+    min-width: 0;
+  }
+
+  .expense-info strong {
+    overflow-wrap: anywhere;
+  }
+
+  .modern-expense-amount {
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+
+  /* BALANCES */
+
+  .modern-balance-row {
+    gap: 15px;
+  }
+
+  .balance-person {
+    min-width: 0;
+  }
+
+  /* AUTH PAGE */
+
+  .auth-page {
+    padding: 12px;
+  }
+
+  .auth-shell {
+    border-radius: 20px;
+  }
+
+  .auth-panel {
+    min-height: calc(100vh - 24px);
+    padding: 28px 20px;
+  }
+
+  .mobile-brand {
+    margin-bottom: 40px;
+  }
+
+  .auth-panel h2 {
+    font-size: 29px;
+  }
+
+  /* BUTTONS */
+
+  .primary-action,
+  .member-add-btn,
+  .split-button,
+  .modern-submit-btn {
+    min-height: 48px;
+  }
+}
+
+/* SMALL PHONES */
+
+@media (max-width: 400px) {
+  .nav-user {
+    gap: 6px;
+  }
+
+  .user-avatar {
+    display: none;
+  }
+
+  .welcome-section h1 {
+    font-size: 28px;
+  }
+
+  .dashboard-stat-card,
+  .stat-card {
+    padding: 16px;
+  }
+
+  .modern-section,
+  .create-group-panel {
+    padding: 17px;
+  }
+
+  .modern-group-card {
+    padding: 17px;
+  }
+
+  .expense-symbol {
+    flex-basis: 36px;
+    width: 36px;
+    height: 36px;
+  }
+}
