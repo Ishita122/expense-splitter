@@ -1,12 +1,12 @@
 import json
 import os
-
-from app.database import Base, SessionLocal, engine
-from app.models import Expense, Group, User  # Update based on your exact model names
+import sqlite3
+from app.database import SessionLocal, engine, Base
+from app.models import User, Group, Expense  # Update based on your exact model names
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "sample_expenses.json")
 
-def seed_database():
+def seed_database() -> None:
     """Populates the database with initial development dataset."""
     db = SessionLocal()
     try:
@@ -17,7 +17,7 @@ def seed_database():
             print(f"Dataset file not found at {DATA_PATH}")
             return
 
-        with open(DATA_PATH, "r") as f:
+        with open(DATA_PATH, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         # 1. Seed Users
@@ -49,20 +49,24 @@ def seed_database():
 
         # 3. Seed Expenses
         for exp in data.get("expenses", []):
+            # Ruff RUF015 Fix: Grab the first group_id efficiently using next(iter())
+            first_group_id = next(iter(group_map.values())) if group_map else 1
+            
             expense_obj = Expense(
                 description=exp["description"],
                 amount=exp["amount"],
                 paid_by=user_map.get(exp["paid_by_email"]),
-                group_id=list(group_map.values())[0] if group_map else 1
+                group_id=first_group_id
             )
             db.add(expense_obj)
 
         db.commit()
         print("Database seeded with sample expenses successfully!")
 
-    except Exception as e:
+    # Ruff BLE001 Fix: Catch specific Database Errors and standard RuntimeErrors instead of Exception
+    except (sqlite3.Error, RuntimeError) as e:
         db.rollback()
-        print(f"Error seeding database: {e}")
+        print(f"Database/Runtime error seeding database: {e}")
     finally:
         db.close()
 
