@@ -1,0 +1,30 @@
+{
+  "users": [
+    {"name": "Ishita Sharma", "email": "ishita@example.com", "password": "hashed_pass_123"},
+    {"name": "Aarav Patel", "email": "aarav@example.com", "password": "hashed_pass_123"},
+    {"name": "Rohan Verma", "email": "rohan@example.com", "password": "hashed_pass_123"}
+  ],
+  "groups": [
+    {"name": "Goa Trip 2026", "created_by_email": "ishita@example.com"}
+  ],
+  "expenses": [
+    {
+      "description": "Beach Villa Airbnb Booking",
+      "amount": 12000.00,
+      "paid_by_email": "ishita@example.com",
+      "split_between": ["ishita@example.com", "aarav@example.com", "rohan@example.com"]
+    },
+    {
+      "description": "Seafood Dinner & Drinks",
+      "amount": 4500.00,
+      "paid_by_email": "aarav@example.com",
+      "split_between": ["ishita@example.com", "aarav@example.com", "rohan@example.com"]
+    },
+    {
+      "description": "Scooter Rentals & Fuel",
+      "amount": 2100.00,
+      "paid_by_email": "rohan@example.com",
+      "split_between": ["ishita@example.com", "aarav@example.com", "rohan@example.com"]
+    }
+  ]
+}
