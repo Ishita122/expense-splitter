@@ -1,7 +1,8 @@
 import json
 import os
-from app.database import SessionLocal, engine, Base
-from app.models import User, Group, Expense  # Update based on your exact model names
+
+from app.database import Base, SessionLocal, engine
+from app.models import Expense, Group, User  # Update based on your exact model names
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "sample_expenses.json")
 
